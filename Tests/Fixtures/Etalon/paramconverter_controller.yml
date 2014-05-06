@@ -1,0 +1,9 @@
+get_user:
+  method:     GET
+  pattern:    /users/{id}.{_format}
+  controller: ::getUserAction
+
+get_user_address:
+  method:     GET
+  pattern:    /users/{userId}/addresses/{addressId}.{_format}
+  controller: ::getUserAddressAction

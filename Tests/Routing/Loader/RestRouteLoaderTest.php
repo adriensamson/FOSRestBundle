@@ -141,6 +141,27 @@ class RestRouteLoaderTest extends LoaderTest
     }
 
     /**
+     * Test that ParamConverter annotations are read
+     */
+    public function testParamConverterFixture()
+    {
+        $collection = $this->loadFromControllerFixture('ParamConverterController');
+        $etalonRoutes = $this->loadEtalonRoutesInfo('paramconverter_controller.yml');
+
+        $this->assertTrue($collection instanceof RestRouteCollection);
+        $this->assertEquals(2, count($collection->all()));
+
+        foreach ($etalonRoutes as $name => $params) {
+            $route = $collection->get($name);
+
+            $this->assertNotNull($route, sprintf('route for %s does not exist', $name));
+            $this->assertEquals($params['pattern'], $route->getPattern(), 'Pattern does not match for route: ' . $name);
+            $this->assertEquals($params['method'], $route->getRequirement('_method'), 'Method does not match for route: ' . $name);
+            $this->assertContains($params['controller'], $route->getDefault('_controller'), 'Controller does not match for route: ' . $name);
+        }
+    }
+
+    /**
      * Test that a custom format annotation is not overwritten
      */
     public function testCustomFormatRequirementIsKept()

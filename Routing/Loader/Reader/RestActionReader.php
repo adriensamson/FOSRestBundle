@@ -13,6 +13,7 @@ namespace FOS\RestBundle\Routing\Loader\Reader;
 
 use Doctrine\Common\Annotations\Reader;
 
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\Routing\Route;
 
 use FOS\RestBundle\Util\Inflector\InflectorInterface;
@@ -337,6 +338,10 @@ class RestActionReader
             'Symfony\Component\Validator\ConstraintViolationListInterface',
         );
 
+        $paramConverters = array_filter($this->annotationReader->getMethodAnnotations($method), function ($methodAnnotation) {
+            return $methodAnnotation instanceof ParamConverter;
+        });
+
         $arguments = array();
         foreach ($method->getParameters() as $argument) {
             if (isset($params[$argument->getName()])) {
@@ -352,7 +357,17 @@ class RestActionReader
                 }
             }
 
-            $arguments[] = $argument;
+            $argumentName = $argument->getName();
+
+            foreach ($paramConverters as $paramConverter) {
+                if ($paramConverter->getName() === $argumentName) {
+                    $options = $paramConverter->getOptions();
+                    $argumentName = isset($options['id']) ? $options['id'] : 'id';
+                    break;
+                }
+            }
+
+            $arguments[] = $argumentName;
         }
 
         return $arguments;
@@ -402,9 +417,9 @@ class RestActionReader
                 if (null !== $resource) {
                     $urlParts[] =
                         strtolower($this->inflector->pluralize($resource))
-                        .'/{'.$arguments[$i]->getName().'}';
+                        .'/{'.$arguments[$i].'}';
                 } else {
-                    $urlParts[] = '{'.$arguments[$i]->getName().'}';
+                    $urlParts[] = '{'.$arguments[$i].'}';
                 }
             } elseif (null !== $resource) {
                 if ((0 === count($arguments) && !in_array($httpMethod, $this->availableHTTPMethods))
